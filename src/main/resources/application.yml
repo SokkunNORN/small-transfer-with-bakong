@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: transfer-bakong-api
+  datasource:
+    platform: postgres
+    username: ${DB_USER:small_transfer}
+    password: ${DB_PASSWORD:pwd123}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:small_transfer}?stringtype=unspecified
+    driver-class-name: org.postgresql.Driver
+  liquibase:
+    change-log: classpath:/db/master.xml
+    contexts: ${CHANGE_LOG:dev}
+    user: ${DB_USER:small_transfer}
+    password: ${DB_PASSWORD:pwd123}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+server:
+  port: ${PORT:9095}

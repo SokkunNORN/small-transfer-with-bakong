@@ -1,0 +1,16 @@
+version: '1'
+
+services:
+
+  db:
+    image: "arm64v8/postgres"
+    container_name: "small-transfer-with-bakong"
+    restart: on-failure
+    environment:
+      - DB_PASSWORD=pwd123
+      - DB_USER=small_transfer
+      - POSTGRES_PASSWORD=pwd123
+    volumes:
+      - ./postgresql/small_transfer_init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
