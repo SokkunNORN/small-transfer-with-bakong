@@ -1,0 +1,8 @@
+id,name,description
+1,PENDING,Pending
+2,FAILED,Failed
+3,SUCCESS,Success
+4,CANCELLED,Canceled
+5,DELETED,Deleted
+6,TIMEOUT,Timeout
+7,FAILED_CREATE_TRANSACTION,Failed Create Transaction

@@ -6,7 +6,7 @@
     <!--TABLE-->
     <changeSet id="20220928140700_transfer_init_table" author="sokkun">
         <!-- STATUS -->
-        <createTable tableName="status">
+        <createTable tableName="transaction_status">
             <column name="id" type="number(19)">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_status" />
             </column>
@@ -27,6 +27,17 @@
             <column name="code" type="varchar2">
                 <constraints nullable="false"/>
             </column>
+        </createTable>
+
+        <!-- QR CODE STATUS -->
+        <createTable tableName="qr_code_status">
+            <column name="id" type="number(19)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_qr_code_status" />
+            </column>
+            <column name="name" type="varchar2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
         </createTable>
 
         <!-- TRANSACTION -->
@@ -58,27 +69,68 @@
 
             <column name="sender_account" type="varchar2"/>
             <column name="sender_name" type="varchar2"/>
-            <column name="sender_account_number" type="varchar2"/>
 
             <column name="receiver_account" type="varchar2"/>
             <column name="receiver_name" type="varchar2" />
-            <column name="receiver_account_number" type="varchar2" />
 
             <column name="created_at" type="timestamp"/>
             <column name="settled_at" type="timestamp"/>
         </createTable>
+
+        <!-- QR CODES -->
+        <createTable tableName="qr_codes">
+            <column name="id" type="number(19)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_qr_code"/>
+            </column>
+            <column name="qr_string" type="varchar2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="md5" type="varchar2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="decimal" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency_id" type="number(19)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bill_number" type="varchar2"/>
+            <column name="description" type="text"/>
+
+            <column name="retry_attempted" type="int" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="terminal_label" type="varchar2"/>
+            <column name="cashier_label" type="varchar2"/>
+            <column name="status_id" type="number(19)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp"/>
+        </createTable>
+
     </changeSet>
 
     <!--FOREIGN KEY-->
     <changeSet id="20220928140700_transfer_init_fk" author="sokkun">
         <!--TABLE TRANSACTION-->
         <addForeignKeyConstraint baseTableName="transaction" baseColumnNames="status_id"
-                                 referencedTableName="status"
+                                 referencedTableName="transaction_status"
                                  constraintName="fk_transaction_status"
                                  referencedColumnNames="id"/>
         <addForeignKeyConstraint baseTableName="transaction" baseColumnNames="currency_id"
                                  referencedTableName="currency_type"
-                                 constraintName="pk_transaction_currency"
+                                 constraintName="fk_transaction_currency"
+                                 referencedColumnNames="id"/>
+
+        <!--TABLE QR CODE-->
+        <addForeignKeyConstraint baseTableName="qr_codes" baseColumnNames="status_id"
+                                 referencedTableName="qr_code_status"
+                                 constraintName="fk_qr_code_status"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="qr_codes" baseColumnNames="currency_id"
+                                 referencedTableName="currency_type"
+                                 constraintName="fk_qr_code_currency"
                                  referencedColumnNames="id"/>
     </changeSet>
 

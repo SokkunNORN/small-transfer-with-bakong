@@ -6,4 +6,5 @@
 
     <!-- transaction -->
     <include file="db/changelog/20220928140700_transfer_init_table.xml" relativeToChangelogFile="false" />
+    <include file="db/changelog/20220928163000_transfer_loading_data.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>
