@@ -1,0 +1,3 @@
+package me.transfer.transferbakongapi.service
+
+interface IKHQRTransactionService
