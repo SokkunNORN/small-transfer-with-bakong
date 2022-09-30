@@ -23,6 +23,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.liquibase:liquibase-core")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 
 	// database
 	implementation("org.postgresql:postgresql")
