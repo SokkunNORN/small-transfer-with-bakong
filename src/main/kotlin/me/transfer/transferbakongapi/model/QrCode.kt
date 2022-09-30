@@ -11,7 +11,7 @@ data class QrCode(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "qr_string", nullable = false)
     val qrString: String,
 
     @Column(name = "md5", nullable = false)
@@ -32,7 +32,7 @@ data class QrCode(
     @Column(name = "terminal_label")
     val terminalLabel: String? = null,
 
-    @Column(name = "cushier_label")
+    @Column(name = "cashier_label")
     val cushierLabel: String? = null,
 
     @CreationTimestamp

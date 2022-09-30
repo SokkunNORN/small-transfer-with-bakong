@@ -1,5 +1,6 @@
 package me.transfer.transferbakongapi.model
 
+import org.hibernate.FetchMode.LAZY
 import org.hibernate.annotations.CreationTimestamp
 import java.math.BigDecimal
 import java.time.LocalDateTime
