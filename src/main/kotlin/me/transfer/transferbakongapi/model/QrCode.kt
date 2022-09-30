@@ -8,8 +8,10 @@ import javax.persistence.*
 @Entity
 @Table(name = "qr_codes")
 data class QrCode(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0L,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_qr_code")
+    @SequenceGenerator(name = "seq_qr_code", sequenceName = "SEQ_QR_CODE", initialValue = 10, allocationSize = 10)
+    val id: Long = 1L,
 
     @Column(name = "qr_string", nullable = false)
     val qrString: String,

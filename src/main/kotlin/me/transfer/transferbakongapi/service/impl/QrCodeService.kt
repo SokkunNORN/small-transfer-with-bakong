@@ -8,10 +8,10 @@ import me.transfer.transferbakongapi.command.enum.QrCodeStatusEnum
 import me.transfer.transferbakongapi.command.getOrElseThrow
 import me.transfer.transferbakongapi.model.CurrencyType
 import me.transfer.transferbakongapi.model.QrCode
-import me.transfer.transferbakongapi.repository.CurrencyTypeRepository
 import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.repository.QrCodeStatusRepository
 import me.transfer.transferbakongapi.service.IQrCodeService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.*
@@ -21,12 +21,13 @@ class QrCodeService(
     private val qrCodeRepo: QrCodeRepository,
     private val qrCodeStatusRepo: QrCodeStatusRepository
 ) : IQrCodeService {
+    private val LOG = LoggerFactory.getLogger(javaClass)
     fun getMerchantInformation(request: QrReq): MerchantInfo {
         val merchantInfo = MerchantInfo()
         val billNumber = getRandomNumberString()
 
-        merchantInfo.bakongAccountId = "devbkhppxxx@devb"
-        merchantInfo.merchantId = "123456"
+        merchantInfo.bakongAccountId = "devbkhppxxx@dev"
+        merchantInfo.merchantId = "00000001"
         merchantInfo.acquiringBank = "Dev Bank"
         merchantInfo.currency = getKhQrCurrency(request.currencyId!!)
         merchantInfo.amount = request.amount

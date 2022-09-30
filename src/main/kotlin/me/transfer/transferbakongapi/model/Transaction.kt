@@ -9,7 +9,9 @@ import javax.persistence.*
 @Entity
 @Table(name = "transaction")
 data class Transaction(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_transaction")
+    @SequenceGenerator(name = "seq_transaction", sequenceName = "SEQ_TRANSACTION", initialValue = 10, allocationSize = 10)
     val id: Long = 0L,
 
     @Column(name = "bakong_account_id")
