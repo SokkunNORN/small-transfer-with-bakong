@@ -14,4 +14,7 @@ object Constants {
     const val ACQUIRER_BAKONG_BANK_ID = "devbkhppxxx@devb"
     // TO DO - Define Acquirer Bakong Bank Name
     const val ACQUIRER_BAKONG_BANK_NAME = "Dev Bank"
+
+    const val BAKONG_QR_TRANSACTION_RETRY_IN = 10_000L // In seconds
+    const val MAX_RETRY_ATTEMPT_BAKONG_QR_TRANSACTION = 300 // 100
 }

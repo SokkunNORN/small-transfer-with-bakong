@@ -29,7 +29,7 @@ data class QrCode(
     val description: String? = null,
 
     @Column(name = "retry_attempted", nullable = false)
-    val retryAttempted: Long = 0L,
+    var retryAttempted: Long = 0L,
 
     @Column(name = "terminal_label")
     val terminalLabel: String? = null,

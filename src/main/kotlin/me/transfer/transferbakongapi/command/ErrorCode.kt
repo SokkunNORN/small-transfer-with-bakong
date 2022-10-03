@@ -58,5 +58,8 @@ enum class ErrorCode(val code: Int, val message: String) {
     INACTIVE_STATUS_FIELD(54, "%s is not active."),
     INVALID_STATUS(55, "%s has invalid status."),
     NO_TRANSACTION_TO_SETTLE(56, "There are no any transactions for settle."),
+    BAKONG_API_TIMEOUT(56, "The request to Bakong API is timeout."),
+    BAKONG_SERVER_NOT_REACHABLE(57, "Bakong System is not reachable, please try again."),
+    BAKONG_OPEN_SERVER_NOT_REACHABLE(58, "Bakong Open API Server is not reachable, please try again."),
     GENERAL_ERROR(100, "%s");
 }
