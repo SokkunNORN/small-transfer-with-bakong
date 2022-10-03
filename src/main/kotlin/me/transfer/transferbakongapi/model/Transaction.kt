@@ -2,6 +2,7 @@ package me.transfer.transferbakongapi.model
 
 import org.hibernate.FetchMode.LAZY
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import javax.persistence.*
@@ -14,15 +15,6 @@ data class Transaction(
     @SequenceGenerator(name = "seq_transaction", sequenceName = "SEQ_TRANSACTION", initialValue = 10, allocationSize = 10)
     val id: Long = 0L,
 
-    @Column(name = "bakong_account_id")
-    val bakongAccountId: String? = null,
-
-    @Column(name = "account_info")
-    val accountInfo: String? = null,
-
-    @Column(name = "acquiring_bank")
-    val acquiringBank: String? = null,
-
     @Column(name = "hash")
     val hash: String? = null,
 
@@ -31,12 +23,6 @@ data class Transaction(
 
     @Column(name = "amount", nullable = false)
     val amount: BigDecimal = BigDecimal(0),
-
-    @Column(name = "merchant_name")
-    val merchantName: String? = null,
-
-    @Column(name = "merchant_city")
-    val merchantCity: String? = null,
 
     @Column(name = "bill_number")
     val billNumber: String? = null,
@@ -59,12 +45,19 @@ data class Transaction(
     @Column(name = "receiver_name")
     val receiverName: String? = null,
 
+    @Column(name = "is_settled", nullable = false)
+    var isSettled: Boolean = false,
+
     @CreationTimestamp
     @Column(name = "created_at")
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
-    @Column(name = "settled_at")
-    val settledAt: LocalDateTime? = null
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    val updateAt: LocalDateTime? = null,
+
+    @Column(name = "description")
+    val description: String? = null
 ) {
     @ManyToOne
     @JoinColumn(name = "currency_id")
