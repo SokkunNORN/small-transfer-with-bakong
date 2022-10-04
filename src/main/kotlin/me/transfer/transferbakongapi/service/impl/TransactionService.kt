@@ -56,7 +56,7 @@ class TransactionService(
       it.isSettled = true
       it
     }
-    transactionRepo.saveAll(transactions)
+    if (transactions.isNotEmpty()) transactionRepo.saveAll(transactions)
 
     LOG.info("Settlement Transaction ended.")
   }
