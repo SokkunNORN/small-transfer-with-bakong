@@ -125,4 +125,17 @@ class ControllersAdvice {
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response)
     }
+
+    @ExceptionHandler(GeneralErrorException::class)
+    fun generalErrorException(
+        request: HttpServletRequest?,
+        e: GeneralErrorException
+    ): ResponseEntity<ResponseWrapper<Any>> {
+        log.error("Error: ", e)
+        val response = ResponseWrapper.error(
+            error = ErrorCode.GENERAL_ERROR,
+            message = e.description ?: ""
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response)
+    }
 }

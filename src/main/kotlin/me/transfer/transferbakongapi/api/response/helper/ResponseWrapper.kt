@@ -1,9 +1,7 @@
 package me.transfer.transferbakongapi.api.response.helper
 
+import me.transfer.transferbakongapi.api.exception.GeneralErrorException
 import me.transfer.transferbakongapi.command.ErrorCode
-import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 
 
 data class ResponseWrapper<T>(val status: Status, val data: T?) {
@@ -36,7 +34,4 @@ data class ResponseWrapper<T>(val status: Status, val data: T?) {
 }
 
 fun <T> ok(data: T): ResponseWrapper<T> = ResponseWrapper.data(data)
-fun err(message: String): ResponseEntity<ResponseWrapper<Any>> {
-    val response = ResponseWrapper.error(ErrorCode.GENERAL_ERROR, message = message)
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response)
-}
+fun err(message: String): Nothing = throw GeneralErrorException(message)
