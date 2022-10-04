@@ -115,7 +115,7 @@ class QrCodeService(
                     LOG.info("Transaction Success hash: ${data.hash}")
                     updateQrCodeStatus(updateQrCode, QrCodeStatusEnum.SUCCESS.id, retryCount)
                     CompletableFuture.supplyAsync {
-                        transactionService.createNewPaymentTransaction(updateQrCode, data)
+                        transactionService.createTransaction(updateQrCode, data)
                     }
                 } else {
                     LOG.info("Success but no data")

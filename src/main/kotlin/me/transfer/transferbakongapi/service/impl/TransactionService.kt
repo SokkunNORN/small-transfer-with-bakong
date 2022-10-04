@@ -22,7 +22,7 @@ class TransactionService(
   private val LOG = LoggerFactory.getLogger(javaClass)
 
   @Transactional
-  fun createNewPaymentTransaction(qrCode: QrCode, bakongTrx: CheckTransactionMd5Dto.Response) {
+  fun createTransaction(qrCode: QrCode, bakongTrx: CheckTransactionMd5Dto.Response) {
     LOG.info("Create new transaction for QR Code [${qrCode.id}, ${qrCode.md5}] - Hash[${bakongTrx.hash}]")
     val currencyType = getOrElseThrow("currency", qrCode.currency.id, currencyTypeRepo::findById)
     val transactionStatus = getOrElseThrow("TransactionType", TransactionStatusEnum.PENDING.id, transactionStatusRepo::findById)
