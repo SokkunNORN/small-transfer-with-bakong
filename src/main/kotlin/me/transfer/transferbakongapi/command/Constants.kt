@@ -8,4 +8,12 @@ object Constants {
     val MAX_KHR_AMOUNT: BigDecimal = BigDecimal.valueOf(9_999_999_999)
     val MIN_USD_AMOUNT: BigDecimal = BigDecimal.valueOf(0.01)
     val MAX_USD_AMOUNT: BigDecimal = BigDecimal.valueOf(999_999)
+
+    const val BAKONG_OPEN_API_EXPIRES_IN_DAYS = 30L
+    const val ACQUIRER_BAKONG_ACCOUNT_ID = "kun_dev@devb"
+    const val ACQUIRER_BAKONG_BANK_ID = "00000014"
+    const val ACQUIRER_BAKONG_BANK_NAME = "Dev Bank"
+
+    const val BAKONG_QR_TRANSACTION_RETRY_IN = 10_000L // In seconds
+    const val MAX_RETRY_ATTEMPT_BAKONG_QR_TRANSACTION = 300 // 100
 }

@@ -7,6 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingServletRequestParameterException
@@ -122,6 +123,19 @@ class ControllersAdvice {
         val response = ResponseWrapper.error(
             error = ErrorCode.MISSING_REQUIRED_FILTERING_PARAM,
             message = e.parameterName
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response)
+    }
+
+    @ExceptionHandler(GeneralErrorException::class)
+    fun generalErrorException(
+        request: HttpServletRequest?,
+        e: GeneralErrorException
+    ): ResponseEntity<ResponseWrapper<Any>> {
+        log.error("Error: ", e)
+        val response = ResponseWrapper.error(
+            error = ErrorCode.GENERAL_ERROR,
+            message = e.description ?: ""
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response)
     }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.10.xsd">
+
+    <!--SYSTEM SETTING-->
+    <changeSet author="jacky"
+               id="seeding-20220608020000-7-${table.system_setting}"
+               dbms="postgresql"
+               labels="tables-${table.system_setting}">
+        <loadData file="seed/system_setting.csv" tableName="system_setting">
+            <column name="id" type="NUMERIC"/>
+            <column name="bakong_mobile_token" type="STRING"/>
+            <column name="bakong_mobile_token_expired_at" type="timestamp"/>
+            <column name="bakong_open_email" type="STRING"/>
+            <column name="bakong_open_token" type="STRING"/>
+            <column name="bakong_open_token_expired_at" type="timestamp"/>
+            <column name="created_at" type="timestamp"/>
+            <column name="updated_at" type="timestamp"/>
+        </loadData>
+    </changeSet>
+</databaseChangeLog>

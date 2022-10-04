@@ -13,7 +13,6 @@ data class QrReq (
     val amount: Double? = null
 ) {
     init {
-        val log = LoggerFactory.getLogger(javaClass)
         getOrElseThrow("currencyId", this.currencyId)
         getOrElseThrow("amount", this.amount)
 

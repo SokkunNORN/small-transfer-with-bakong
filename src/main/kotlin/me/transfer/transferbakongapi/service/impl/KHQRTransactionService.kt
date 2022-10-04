@@ -5,17 +5,20 @@ import me.transfer.transferbakongapi.api.request.QrReq
 import me.transfer.transferbakongapi.api.response.QrRes
 import me.transfer.transferbakongapi.api.response.helper.err
 import me.transfer.transferbakongapi.command.getOrElseThrow
+import me.transfer.transferbakongapi.model.QrCode
 import me.transfer.transferbakongapi.repository.CurrencyTypeRepository
+import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.service.IKHQRTransactionService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.concurrent.CompletableFuture
 
 @Service
 class KHQRTransactionService(
     private val qrCodeService: QrCodeService,
-    private val transactionService: TransactionService,
     private val currencyRepository: CurrencyTypeRepository
 ) : IKHQRTransactionService {
+    private val LOG = LoggerFactory.getLogger(javaClass)
     override fun generateQr(request: QrReq): QrRes {
         val currency = getOrElseThrow("Currency", request.currencyId!!, currencyRepository::findById)
         val merchantInfo = qrCodeService.getMerchantInformation(request)
@@ -25,7 +28,7 @@ class KHQRTransactionService(
         val md5 = khQrRes.data.md5
         val qrString = khQrRes.data.qr
 
-        qrCodeService.saveQRCode(
+        val qrCode = qrCodeService.saveQRCode(
             qrString,
             md5,
             currency,
@@ -35,6 +38,12 @@ class KHQRTransactionService(
             merchantInfo.storeLabel,
             merchantInfo.terminalLabel
         )
+        LOG.info(">>> Created QR ${qrCode.billNumber}")
+
+        CompletableFuture.supplyAsync {
+            Thread.sleep(10_000)
+            qrCodeService.trackingQrTransactionStatus(qrCode)
+        }
 
         return QrRes(
             request.amount!!,
@@ -43,11 +52,5 @@ class KHQRTransactionService(
             currency,
             merchantInfo.terminalLabel
         )
-    }
-
-    private fun getRandomNumberString(): String {
-        val rnd = Random()
-        val number: Int = rnd.nextInt(999999)
-        return String.format("%06d", number)
     }
 }

@@ -45,9 +45,6 @@
             <column name="id" type="number(19)">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_transaction"/>
             </column>
-            <column name="bakong_account_id" type="varchar2"/>
-            <column name="account_info" type="varchar2"/>
-            <column name="acquiring_bank" type="varchar2"/>
             <column name="hash" type="varchar2"/>
             <column name="reversed_hash" type="varchar2"/>
             <column name="currency_id" type="number(19)">
@@ -59,10 +56,11 @@
             <column name="status_id" type="number(19)">
                 <constraints nullable="false"/>
             </column>
+            <column name="is_settled" type="boolean">
+                <constraints nullable="false" />
+            </column>
             <column name="description" type="varchar2"/>
 
-            <column name="merchant_name" type="varchar2"/>
-            <column name="merchant_city" type="varchar2"/>
             <column name="bill_number" type="varchar2"/>
             <column name="store_label" type="varchar2"/>
             <column name="terminal_label" type="varchar2"/>
@@ -74,7 +72,7 @@
             <column name="receiver_name" type="varchar2" />
 
             <column name="created_at" type="timestamp"/>
-            <column name="settled_at" type="timestamp"/>
+            <column name="updated_at" type="timestamp"/>
         </createTable>
 
         <!-- QR CODES -->
