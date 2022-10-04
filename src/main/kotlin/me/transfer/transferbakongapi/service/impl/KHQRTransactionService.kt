@@ -20,7 +20,6 @@ class KHQRTransactionService(
 ) : IKHQRTransactionService {
     private val LOG = LoggerFactory.getLogger(javaClass)
     override fun generateQr(request: QrReq): QrRes {
-        LOG.info("The fun is called...")
         val currency = getOrElseThrow("Currency", request.currencyId!!, currencyRepository::findById)
         val merchantInfo = qrCodeService.getMerchantInformation(request)
 
