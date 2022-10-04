@@ -25,7 +25,7 @@ class TransactionService(
   fun createNewPaymentTransaction(qrCode: QrCode, bakongTrx: CheckTransactionMd5Dto.Response) {
     LOG.info("Create new transaction for QR Code [${qrCode.id}, ${qrCode.md5}] - Hash[${bakongTrx.hash}]")
     val currencyType = getOrElseThrow("currency", qrCode.currency.id, currencyTypeRepo::findById)
-    val transactionStatus = getOrElseThrow("TransactionType", TransactionStatusEnum.SUCCESS.id, transactionStatusRepo::findById)
+    val transactionStatus = getOrElseThrow("TransactionType", TransactionStatusEnum.PENDING.id, transactionStatusRepo::findById)
 
     val newTrx = Transaction(
       hash = bakongTrx.hash,
@@ -35,7 +35,7 @@ class TransactionService(
       terminalLabel = qrCode.terminalLabel,
       senderAccount = bakongTrx.fromAccountId,
       receiverAccount = bakongTrx.toAccountId,
-      description = bakongTrx.description
+      description = qrCode.description
     ).apply {
       currency = currencyType
       status = transactionStatus
@@ -44,5 +44,20 @@ class TransactionService(
     val savedTrx = transactionRepo.save(newTrx)
 
     LOG.info("Successfully create new transaction[${savedTrx.id}] hash[${savedTrx.hash}]")
+  }
+
+  @Transactional
+  fun settleTransaction() {
+    LOG.info("Settlement Transaction starting...")
+    val status = getOrElseThrow("Transaction Status", TransactionStatusEnum.SUCCESS.id, transactionStatusRepo::findById)
+
+    val transactions = transactionRepo.findAllByStatusId(TransactionStatusEnum.PENDING.id).map {
+      it.status = status
+      it.isSettled = true
+      it
+    }
+    transactionRepo.saveAll(transactions)
+
+    LOG.info("Settlement Transaction ended.")
   }
 }
