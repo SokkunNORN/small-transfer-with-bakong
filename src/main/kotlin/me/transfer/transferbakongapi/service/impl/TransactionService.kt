@@ -58,6 +58,6 @@ class TransactionService(
     }
     transactionRepo.saveAll(transactions)
 
-    LOG.info("Settlement Transaction ended...")
+    LOG.info("Settlement Transaction ended.")
   }
 }
