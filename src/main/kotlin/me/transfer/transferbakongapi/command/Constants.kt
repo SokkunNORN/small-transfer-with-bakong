@@ -10,9 +10,8 @@ object Constants {
     val MAX_USD_AMOUNT: BigDecimal = BigDecimal.valueOf(999_999)
 
     const val BAKONG_OPEN_API_EXPIRES_IN_DAYS = 30L
-    const val ACQUIRER_BAKONG_ACCOUNT_ID = "merchant_aquirer@devb"
-    const val ACQUIRER_BAKONG_BANK_ID = "devbkhppxxx@devb"
-    // TO DO - Define Acquirer Bakong Bank Name
+    const val ACQUIRER_BAKONG_ACCOUNT_ID = "kun_dev@devb"
+    const val ACQUIRER_BAKONG_BANK_ID = "00000014"
     const val ACQUIRER_BAKONG_BANK_NAME = "Dev Bank"
 
     const val BAKONG_QR_TRANSACTION_RETRY_IN = 10_000L // In seconds
