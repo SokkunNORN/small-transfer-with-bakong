@@ -2,6 +2,7 @@ package me.transfer.transferbakongapi.service.impl
 
 import kh.org.nbc.bakong_khqr.model.KHQRCurrency
 import kh.org.nbc.bakong_khqr.model.MerchantInfo
+import me.transfer.transferbakongapi.api.request.QrCodeBakongTransactionReq
 import me.transfer.transferbakongapi.api.request.QrReq
 import me.transfer.transferbakongapi.command.Constants
 import me.transfer.transferbakongapi.command.enum.CurrencyEnum
@@ -9,7 +10,6 @@ import me.transfer.transferbakongapi.command.enum.QrCodeStatusEnum
 import me.transfer.transferbakongapi.command.getOrElseThrow
 import me.transfer.transferbakongapi.demain.model.CurrencyType
 import me.transfer.transferbakongapi.demain.model.QrCode
-import me.transfer.transferbakongapi.demain.projection.QrCodeProjection
 import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.repository.QrCodeStatusRepository
 import me.transfer.transferbakongapi.service.IQrCodeService
@@ -73,15 +73,17 @@ class QrCodeService(
         return qrCodeRepo.save(qrCode)
     }
 
-    fun saveToSuccessQrCodes(ids: Set<Long>) {
-        if (ids.isNotEmpty()) {
+    fun saveToSuccessQrCodes(requests: Set<QrCodeBakongTransactionReq>) {
+        if (requests.isNotEmpty()) {
             val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.SUCCESS.id, qrCodeStatusRepo::findById)
-            val successQrCodes = this.getAllQrCodeByIds(ids).map {
+            val qrCodeIds = requests.map { it.qrCode.id }.toSet()
+            val successQrCodes = this.getAllQrCodeByIds(qrCodeIds).map {
                 it.status = status
                 it
             }
 
             this.saveAllQrCode(successQrCodes.toSet())
+            transactionService.saveAllTransactions(requests)
         }
     }
 
@@ -136,8 +138,8 @@ class QrCodeService(
         }
     }
 
-    fun getAllPendingQrCode() : List<QrCodeProjection> {
-        return qrCodeRepo.findAllByStatusId(QrCodeStatusEnum.PENDING.id, QrCodeProjection::class.java)
+    fun getAllPendingQrCode() : List<QrCode> {
+        return qrCodeRepo.findAllByStatusId(QrCodeStatusEnum.PENDING.id)
     }
 
     @Transactional

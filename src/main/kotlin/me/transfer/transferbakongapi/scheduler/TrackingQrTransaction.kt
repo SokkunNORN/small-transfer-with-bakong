@@ -9,7 +9,9 @@ import me.transfer.transferbakongapi.service.impl.QrCodeService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import me.transfer.transferbakongapi.api.bakong_client.dto.CheckTransactionMd5Dto
+import me.transfer.transferbakongapi.api.bakong_client.dto.ResponseWrapper
+import me.transfer.transferbakongapi.api.request.QrCodeBakongTransactionReq
 
 @Service
 class TrackingQrTransaction(
@@ -19,21 +21,29 @@ class TrackingQrTransaction(
     private val LOG = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(cron = "2 * * * * *")
-    @Transactional
     fun trackingQrTransactionStatus() {
         val pendingQrCodes = qrCodeService.getAllPendingQrCode()
 
         if (pendingQrCodes.isNotEmpty()) {
             LOG.info(">>> Tracking Transaction By QR Id: ${pendingQrCodes.map { it.id }}")
 
-            val trackingSuccessQrIds = mutableSetOf<Long>()
             val trackingFailQrIds = mutableSetOf<Long>()
             val retryQrCode = mutableSetOf<Long>()
+            val trackingSuccessQrCodes = mutableSetOf<QrCodeBakongTransactionReq>()
 
             pendingQrCodes.forEach { qrCode ->
-                this.trackingBakongTransactionByMD5(qrCode).let {
+                val bakongResponse = bakongOpenAPIClientHelper.checkTransactionWithMd5(qrCode.md5)
+
+                this.trackingBakongTransactionByMD5(bakongResponse).let {
                     when (it) {
-                        QrCodeStatusEnum.SUCCESS.id -> trackingSuccessQrIds.add(qrCode.id)
+                        QrCodeStatusEnum.SUCCESS.id -> {
+                            trackingSuccessQrCodes.add(
+                                QrCodeBakongTransactionReq(
+                                    qrCode = qrCode,
+                                    bakongTrx = bakongResponse.data!!
+                                )
+                            )
+                        }
                         QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(qrCode.id)
                         else -> {
                             retryQrCode.add(qrCode.id)
@@ -42,14 +52,13 @@ class TrackingQrTransaction(
                     }
                 }
             }
-            qrCodeService.saveToSuccessQrCodes(trackingSuccessQrIds)
+            qrCodeService.saveToSuccessQrCodes(trackingSuccessQrCodes)
             qrCodeService.saveWithIncreaseRetryAttempt(retryQrCode)
             qrCodeService.saveToFailQrCodes(trackingFailQrIds)
         }
     }
 
-    private fun trackingBakongTransactionByMD5(qrCodeProjection: QrCodeProjection): Long {
-        val res = bakongOpenAPIClientHelper.checkTransactionWithMd5(qrCodeProjection.md5)
+    private fun trackingBakongTransactionByMD5(res: ResponseWrapper<CheckTransactionMd5Dto.Response>): Long {
         val data = res.data
 
         when (res.responseCode) {

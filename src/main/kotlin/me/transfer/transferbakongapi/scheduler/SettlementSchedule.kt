@@ -10,5 +10,7 @@ class SettlementSchedule(
 ) {
 
     @Scheduled(cron = "10 * * * * *")
-    fun settleTransaction() = service.settleTransaction()
+    fun settleTransaction() {
+        service.settleTransaction()
+    }
 }

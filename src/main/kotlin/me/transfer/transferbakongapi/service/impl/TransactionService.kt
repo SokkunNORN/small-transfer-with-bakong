@@ -1,6 +1,7 @@
 package me.transfer.transferbakongapi.service.impl
 
 import me.transfer.transferbakongapi.api.bakong_client.dto.CheckTransactionMd5Dto
+import me.transfer.transferbakongapi.api.request.QrCodeBakongTransactionReq
 import me.transfer.transferbakongapi.command.enum.TransactionStatusEnum
 import me.transfer.transferbakongapi.command.getOrElseThrow
 import me.transfer.transferbakongapi.demain.model.QrCode
@@ -22,28 +23,56 @@ class TransactionService(
   private val LOG = LoggerFactory.getLogger(javaClass)
 
   @Transactional
-  fun createTransaction(qrCode: QrCode, bakongTrx: CheckTransactionMd5Dto.Response) {
-    LOG.info("Create new transaction for QR Code [${qrCode.id}, ${qrCode.md5}] - Hash[${bakongTrx.hash}]")
-    val currencyType = getOrElseThrow("currency", qrCode.currency.id, currencyTypeRepo::findById)
+  fun saveTransaction(request: QrCodeBakongTransactionReq) {
+    LOG.info("Create new transaction for QR Code [${request.qrCode.id}, ${request.qrCode.md5}] - Hash[${request.bakongTrx.hash}]")
     val transactionStatus = getOrElseThrow("TransactionType", TransactionStatusEnum.PENDING.id, transactionStatusRepo::findById)
 
     val newTrx = Transaction(
-      hash = bakongTrx.hash,
-      amount = qrCode.amount,
-      billNumber = qrCode.billNumber,
-      storeLabel = qrCode.cushierLabel,
-      terminalLabel = qrCode.terminalLabel,
-      senderAccount = bakongTrx.fromAccountId,
-      receiverAccount = bakongTrx.toAccountId,
-      description = qrCode.description
+      hash = request.bakongTrx.hash,
+      amount = request.qrCode.amount,
+      billNumber = request.qrCode.billNumber,
+      storeLabel = request.qrCode.cushierLabel,
+      terminalLabel = request.qrCode.terminalLabel,
+      senderAccount = request.bakongTrx.fromAccountId,
+      receiverAccount = request.bakongTrx.toAccountId,
+      description = request.qrCode.description
     ).apply {
-      currency = currencyType
+      currency = request.qrCode.currency
       status = transactionStatus
     }
 
     val savedTrx = transactionRepo.save(newTrx)
 
     LOG.info("Successfully create new transaction[${savedTrx.id}] hash[${savedTrx.hash}]")
+  }
+
+  @Transactional
+  fun saveAllTransactions(requests: Set<QrCodeBakongTransactionReq>) {
+    val newTransactions = mutableSetOf<Transaction>()
+    val transactionStatus = getOrElseThrow("TransactionType", TransactionStatusEnum.PENDING.id, transactionStatusRepo::findById)
+
+    requests.map { request ->
+      val transaction = Transaction(
+        hash = request.bakongTrx.hash,
+        amount = request.qrCode.amount,
+        billNumber = request.qrCode.billNumber,
+        storeLabel = request.qrCode.cushierLabel,
+        terminalLabel = request.qrCode.terminalLabel,
+        senderAccount = request.bakongTrx.fromAccountId,
+        receiverAccount = request.bakongTrx.toAccountId,
+        description = request.qrCode.description
+      ).apply {
+        currency = request.qrCode.currency
+        status = transactionStatus
+      }
+
+      newTransactions.add(transaction)
+    }
+
+    if (newTransactions.isNotEmpty()) {
+      transactionRepo.saveAll(newTransactions)
+      LOG.info("Successfully create new transaction: ${newTransactions.size} transaction(s)")
+    }
   }
 
   @Transactional
