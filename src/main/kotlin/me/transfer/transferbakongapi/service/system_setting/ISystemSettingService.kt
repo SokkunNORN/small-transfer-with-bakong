@@ -1,6 +1,6 @@
 package me.transfer.transferbakongapi.service.system_setting
 
-import me.transfer.transferbakongapi.model.SystemSetting
+import me.transfer.transferbakongapi.demain.model.SystemSetting
 
 interface ISystemSettingService {
 

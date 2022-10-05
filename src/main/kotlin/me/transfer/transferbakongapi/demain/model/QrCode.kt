@@ -1,4 +1,4 @@
-package me.transfer.transferbakongapi.model
+package me.transfer.transferbakongapi.demain.model
 
 import org.hibernate.annotations.CreationTimestamp
 import java.math.BigDecimal

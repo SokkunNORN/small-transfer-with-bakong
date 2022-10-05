@@ -3,8 +3,8 @@ package me.transfer.transferbakongapi.service.impl
 import me.transfer.transferbakongapi.api.bakong_client.dto.CheckTransactionMd5Dto
 import me.transfer.transferbakongapi.command.enum.TransactionStatusEnum
 import me.transfer.transferbakongapi.command.getOrElseThrow
-import me.transfer.transferbakongapi.model.QrCode
-import me.transfer.transferbakongapi.model.Transaction
+import me.transfer.transferbakongapi.demain.model.QrCode
+import me.transfer.transferbakongapi.demain.model.Transaction
 import me.transfer.transferbakongapi.repository.CurrencyTypeRepository
 import me.transfer.transferbakongapi.repository.TransactionRepository
 import me.transfer.transferbakongapi.repository.TransactionStatusRepository

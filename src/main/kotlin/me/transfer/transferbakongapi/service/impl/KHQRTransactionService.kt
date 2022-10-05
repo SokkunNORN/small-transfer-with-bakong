@@ -5,7 +5,7 @@ import me.transfer.transferbakongapi.api.request.QrReq
 import me.transfer.transferbakongapi.api.response.QrRes
 import me.transfer.transferbakongapi.api.response.helper.err
 import me.transfer.transferbakongapi.command.getOrElseThrow
-import me.transfer.transferbakongapi.model.QrCode
+import me.transfer.transferbakongapi.demain.model.QrCode
 import me.transfer.transferbakongapi.repository.CurrencyTypeRepository
 import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.service.IKHQRTransactionService
@@ -39,11 +39,6 @@ class KHQRTransactionService(
             merchantInfo.terminalLabel
         )
         LOG.info(">>> Created QR ${qrCode.billNumber}")
-
-        CompletableFuture.supplyAsync {
-            Thread.sleep(10_000)
-            qrCodeService.trackingQrTransactionStatus(qrCode)
-        }
 
         return QrRes(
             request.amount!!,

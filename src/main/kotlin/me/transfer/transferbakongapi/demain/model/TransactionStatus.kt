@@ -1,4 +1,4 @@
-package me.transfer.transferbakongapi.model
+package me.transfer.transferbakongapi.demain.model
 
 import javax.persistence.Column
 import javax.persistence.Entity
