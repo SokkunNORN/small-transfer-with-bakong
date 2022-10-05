@@ -2,9 +2,6 @@ package me.transfer.transferbakongapi.service.impl
 
 import kh.org.nbc.bakong_khqr.model.KHQRCurrency
 import kh.org.nbc.bakong_khqr.model.MerchantInfo
-import me.transfer.transferbakongapi.api.bakong_client.enum.ErrorCode
-import me.transfer.transferbakongapi.api.bakong_client.enum.ResponseCode
-import me.transfer.transferbakongapi.api.bakong_client.open.helper.BakongOpenAPIClientHelper
 import me.transfer.transferbakongapi.api.request.QrReq
 import me.transfer.transferbakongapi.command.Constants
 import me.transfer.transferbakongapi.command.enum.CurrencyEnum
@@ -17,20 +14,15 @@ import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.repository.QrCodeStatusRepository
 import me.transfer.transferbakongapi.service.IQrCodeService
 import org.slf4j.LoggerFactory
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Retryable
-import org.springframework.retry.support.RetrySynchronizationManager
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 @Service
 class QrCodeService(
     private val qrCodeRepo: QrCodeRepository,
     private val qrCodeStatusRepo: QrCodeStatusRepository,
-    private val bakongOpenAPIClientHelper: BakongOpenAPIClientHelper,
     private val transactionService: TransactionService
 ) : IQrCodeService {
     private val LOG = LoggerFactory.getLogger(javaClass)
@@ -82,27 +74,27 @@ class QrCodeService(
     }
 
     fun saveToSuccessQrCodes(ids: Set<Long>) {
-        if (ids.isEmpty()) return
+        if (ids.isNotEmpty()) {
+            val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.SUCCESS.id, qrCodeStatusRepo::findById)
+            val successQrCodes = this.getAllQrCodeByIds(ids).map {
+                it.status = status
+                it
+            }
 
-        val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.SUCCESS.id, qrCodeStatusRepo::findById)
-        val successQrCodes = this.getAllQrCodeByIds(ids).map {
-            it.status = status
-            it
+            this.saveAllQrCode(successQrCodes.toSet())
         }
-
-        this.saveAllQrCode(successQrCodes.toSet())
     }
 
     fun saveToFailQrCodes(ids: Set<Long>) {
-        if (ids.isEmpty()) return
+        if (ids.isNotEmpty()) {
+            val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.FAILED.id, qrCodeStatusRepo::findById)
+            val successQrCodes = this.getAllQrCodeByIds(ids).map {
+                it.status = status
+                it
+            }
 
-        val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.FAILED.id, qrCodeStatusRepo::findById)
-        val successQrCodes = this.getAllQrCodeByIds(ids).map {
-            it.status = status
-            it
+            this.saveAllQrCode(successQrCodes.toSet())
         }
-
-        this.saveAllQrCode(successQrCodes.toSet())
     }
 
     fun getAllPendingQrCode() : List<QrCodeProjection> {
