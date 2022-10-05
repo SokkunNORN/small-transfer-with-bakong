@@ -9,6 +9,7 @@ import me.transfer.transferbakongapi.service.impl.QrCodeService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TrackingQrTransaction(
@@ -18,6 +19,7 @@ class TrackingQrTransaction(
     private val LOG = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(cron = "3 * * * * *")
+    @Transactional
     fun trackingQrTransactionStatus() {
         val pendingQrCodes = qrCodeService.getAllPendingQrCode()
 
@@ -26,17 +28,22 @@ class TrackingQrTransaction(
 
             val trackingSuccessQrIds = mutableSetOf<Long>()
             val trackingFailQrIds = mutableSetOf<Long>()
+            val retryQrCode = mutableSetOf<Long>()
 
             pendingQrCodes.forEach { qrCode ->
                 this.trackingBakongTransactionByMD5(qrCode).let {
                     when (it) {
-                        QrCodeStatusEnum.SUCCESS.id -> trackingSuccessQrIds.add(it)
-                        QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(it)
-                        else -> LOG.info(">>> The QR Code is in tracking: ${qrCode.id}")
+                        QrCodeStatusEnum.SUCCESS.id -> trackingSuccessQrIds.add(qrCode.id)
+                        QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(qrCode.id)
+                        else -> {
+                            retryQrCode.add(qrCode.id)
+                            LOG.info(">>> The QR Code is in tracking: ${qrCode.id}")
+                        }
                     }
                 }
             }
             qrCodeService.saveToSuccessQrCodes(trackingSuccessQrIds)
+            qrCodeService.saveWithIncreaseRetryAttempt(retryQrCode)
             qrCodeService.saveToFailQrCodes(trackingFailQrIds)
         }
     }

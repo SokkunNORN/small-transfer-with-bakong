@@ -45,7 +45,7 @@ class QrCodeService(
         return merchantInfo
     }
 
-    fun saveQRCode(
+    fun initQrCode(
         qrString: String,
         md5: String,
         currency: CurrencyType,
@@ -82,6 +82,45 @@ class QrCodeService(
             }
 
             this.saveAllQrCode(successQrCodes.toSet())
+        }
+    }
+
+    fun saveWithIncreaseRetryAttempt(ids: Set<Long>) {
+        if (ids.isNotEmpty()) {
+            val qrCodes = this.getAllQrCodeByIds(ids)
+            val timeoutQrCodes = mutableSetOf<Long>()
+            val pendingQrCodeIds = mutableSetOf<Long>()
+
+            qrCodes.map {
+                if (it.retryAttempted >= 20) {
+                    timeoutQrCodes.add(it.id)
+                } else {
+                    pendingQrCodeIds.add(it.id)
+                }
+            }
+
+            if (pendingQrCodeIds.isNotEmpty()) {
+                val pendingQrCodes = this.getAllQrCodeByIds(pendingQrCodeIds).map {
+                    it.retryAttempted = it.retryAttempted.plus(1)
+                    it
+                }
+
+                this.saveAllQrCode(pendingQrCodes.toSet())
+            }
+
+            if (timeoutQrCodes.isNotEmpty()) this.saveToTimeoutQrCodes(timeoutQrCodes)
+        }
+    }
+
+    fun saveToTimeoutQrCodes(ids: Set<Long>) {
+        if (ids.isNotEmpty()) {
+            val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.TIME_OUT.id, qrCodeStatusRepo::findById)
+            val timeoutQrCode = this.getAllQrCodeByIds(ids).map {
+                it.status = status
+                it
+            }
+
+            this.saveAllQrCode(timeoutQrCode.toSet())
         }
     }
 

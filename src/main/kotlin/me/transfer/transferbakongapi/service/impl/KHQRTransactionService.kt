@@ -28,7 +28,7 @@ class KHQRTransactionService(
         val md5 = khQrRes.data.md5
         val qrString = khQrRes.data.qr
 
-        val qrCode = qrCodeService.saveQRCode(
+        val qrCode = qrCodeService.initQrCode(
             qrString,
             md5,
             currency,
