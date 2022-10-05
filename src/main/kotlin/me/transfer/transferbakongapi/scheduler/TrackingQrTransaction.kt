@@ -24,7 +24,7 @@ class TrackingQrTransaction(
         val pendingQrCodes = qrCodeService.getAllPendingQrCode()
 
         if (pendingQrCodes.isNotEmpty()) {
-            LOG.info(">>> Tracking Transaction By QR md5: ${pendingQrCodes.map { it.md5 }}")
+            LOG.info(">>> Tracking Transaction By QR Id: ${pendingQrCodes.map { it.id }}")
 
             val trackingSuccessQrIds = mutableSetOf<Long>()
             val trackingFailQrIds = mutableSetOf<Long>()
