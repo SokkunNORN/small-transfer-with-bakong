@@ -92,7 +92,7 @@ class QrCodeService(
             val pendingQrCodeIds = mutableSetOf<Long>()
 
             qrCodes.map {
-                if (it.retryAttempted >= 20) {
+                if (it.retryAttempted > 60 / 2) {
                     timeoutQrCodes.add(it.id)
                 } else {
                     pendingQrCodeIds.add(it.id)

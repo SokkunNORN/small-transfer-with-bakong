@@ -48,7 +48,7 @@ class TransactionService(
 
   @Transactional
   fun settleTransaction() {
-    LOG.info("Settlement Transaction starting...")
+    LOG.info("Settlement starting...")
     val status = getOrElseThrow("Transaction Status", TransactionStatusEnum.SUCCESS.id, transactionStatusRepo::findById)
 
     val transactions = transactionRepo.findAllByStatusId(TransactionStatusEnum.PENDING.id).map {
@@ -58,6 +58,6 @@ class TransactionService(
     }
     if (transactions.isNotEmpty()) transactionRepo.saveAll(transactions)
 
-    LOG.info("Settlement Transaction ended.")
+    LOG.info("Settlement ended.")
   }
 }

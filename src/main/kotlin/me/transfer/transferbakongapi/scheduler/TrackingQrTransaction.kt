@@ -18,7 +18,7 @@ class TrackingQrTransaction(
 ) {
     private val LOG = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(cron = "3 * * * * *")
+    @Scheduled(cron = "2 * * * * *")
     @Transactional
     fun trackingQrTransactionStatus() {
         val pendingQrCodes = qrCodeService.getAllPendingQrCode()
@@ -37,7 +37,7 @@ class TrackingQrTransaction(
                         QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(qrCode.id)
                         else -> {
                             retryQrCode.add(qrCode.id)
-                            LOG.info(">>> The QR Code is in tracking: ${qrCode.id}")
+                            LOG.info(">>> The QR Code id is in tracking: ${qrCode.id}")
                         }
                     }
                 }
