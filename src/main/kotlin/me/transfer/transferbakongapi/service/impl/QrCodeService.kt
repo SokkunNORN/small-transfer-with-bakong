@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 @Service
 class QrCodeService(
@@ -75,6 +76,7 @@ class QrCodeService(
 
     fun saveToSuccessQrCodes(requests: Set<QrCodeBakongTransactionReq>) {
         if (requests.isNotEmpty()) {
+            LOG.info("Successful transaction QR Code id: ${requests.map { it.qrCode.id }}")
             val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.SUCCESS.id, qrCodeStatusRepo::findById)
             val qrCodeIds = requests.map { it.qrCode.id }.toSet()
             val successQrCodes = this.getAllQrCodeByIds(qrCodeIds).map {
@@ -82,7 +84,9 @@ class QrCodeService(
                 it
             }
 
-            this.saveAllQrCode(successQrCodes.toSet())
+            CompletableFuture.supplyAsync {
+                this.saveAllQrCode(successQrCodes.toSet())
+            }
             transactionService.saveAllTransactions(requests)
         }
     }
@@ -102,6 +106,7 @@ class QrCodeService(
             }
 
             if (pendingQrCodeIds.isNotEmpty()) {
+                LOG.info(">>> The QR Code id is in tracking: $pendingQrCodeIds")
                 val pendingQrCodes = this.getAllQrCodeByIds(pendingQrCodeIds).map {
                     it.retryAttempted = it.retryAttempted.plus(1)
                     it
@@ -116,6 +121,7 @@ class QrCodeService(
 
     fun saveToTimeoutQrCodes(ids: Set<Long>) {
         if (ids.isNotEmpty()) {
+            LOG.info(">>> Time out QR Code id: $ids")
             val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.TIME_OUT.id, qrCodeStatusRepo::findById)
             val timeoutQrCode = this.getAllQrCodeByIds(ids).map {
                 it.status = status
@@ -128,6 +134,7 @@ class QrCodeService(
 
     fun saveToFailQrCodes(ids: Set<Long>) {
         if (ids.isNotEmpty()) {
+            LOG.info(">>> Failed tracking QR Code id: $ids")
             val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.FAILED.id, qrCodeStatusRepo::findById)
             val successQrCodes = this.getAllQrCodeByIds(ids).map {
                 it.status = status
@@ -151,58 +158,6 @@ class QrCodeService(
     private fun getAllQrCodeByIds(ids: Set<Long>): List<QrCode> {
         return qrCodeRepo.findAllByIdIn(ids)
     }
-
-//    @Retryable(
-//        value = [RuntimeException::class],
-//        maxAttempts = Constants.MAX_RETRY_ATTEMPT_BAKONG_QR_TRANSACTION,
-//        backoff = Backoff(delay = Constants.BAKONG_QR_TRANSACTION_RETRY_IN)
-//    )
-//    fun trackingQrTransactionStatus(qrCode: QrCode) {
-//        val retryCount = RetrySynchronizationManager.getContext().retryCount + 1
-//        val logDescription = "Tracking Transaction status of QR Code [${qrCode.id}], md5 [${qrCode.md5}]"
-//        LOG.info("Retry[$retryCount] - $logDescription")
-//
-//        val updateQrCode = getOrElseThrow("QrCode", qrCode.id, qrCodeRepo::findById)
-//
-//        if (updateQrCode.status.id != QrCodeStatusEnum.PENDING.id) {
-//            LOG.info("Stop retry for QR Code [${qrCode.id}], md5 [${qrCode.md5}]")
-//            return
-//        }
-//
-//        val res = bakongOpenAPIClientHelper.checkTransactionWithMd5(updateQrCode.md5)
-//        val data = res.data
-//
-//        when (res.responseCode) {
-//            ResponseCode.SUCCESS.code -> {
-//                if (data != null) {
-//                    LOG.info("Transaction Success hash: ${data.hash}")
-//                    updateQrCodeStatus(updateQrCode, QrCodeStatusEnum.SUCCESS.id, retryCount)
-//                    CompletableFuture.supplyAsync {
-//                        transactionService.createTransaction(updateQrCode, data)
-//                    }
-//                } else {
-//                    LOG.info("Success but no data")
-//                    throw java.lang.RuntimeException("try_check_again")
-//                }
-//            }
-//            ResponseCode.FAIL.code -> {
-//                when (res.errorCode) {
-//                    ErrorCode.TRANSACTION_NOT_FOUND.code -> {
-//                        LOG.info("Not found transaction -> Try again")
-//                        throw java.lang.RuntimeException("try_check_again")
-//                    }
-//                    ErrorCode.TRANSACTION_FAILED.code -> {
-//                        LOG.info("Transaction Failed")
-//                        updateQrCodeStatus(updateQrCode, QrCodeStatusEnum.FAILED.id, retryCount)
-//                    }
-//                    else -> {
-//                        LOG.info("Unknown error code")
-//                        throw java.lang.RuntimeException("try_check_again")
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     private fun getKhQrCurrency(currencyId: Long): KHQRCurrency {
         return if (currencyId == CurrencyEnum.KHR.id) {

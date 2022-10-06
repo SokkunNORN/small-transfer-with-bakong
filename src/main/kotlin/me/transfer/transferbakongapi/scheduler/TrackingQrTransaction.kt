@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 import me.transfer.transferbakongapi.api.bakong_client.dto.CheckTransactionMd5Dto
 import me.transfer.transferbakongapi.api.bakong_client.dto.ResponseWrapper
 import me.transfer.transferbakongapi.api.request.QrCodeBakongTransactionReq
+import org.springframework.util.StopWatch
 
 @Service
 class TrackingQrTransaction(
@@ -20,16 +21,17 @@ class TrackingQrTransaction(
 ) {
     private val LOG = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(cron = "2 * * * * *")
+    @Scheduled(fixedDelay = 1000) // delay from end executed to start new execute
     fun trackingQrTransactionStatus() {
         val pendingQrCodes = qrCodeService.getAllPendingQrCode()
 
         if (pendingQrCodes.isNotEmpty()) {
-            LOG.info(">>> Tracking Transaction By QR Id: ${pendingQrCodes.map { it.id }}")
-
             val trackingFailQrIds = mutableSetOf<Long>()
             val retryQrCode = mutableSetOf<Long>()
             val trackingSuccessQrCodes = mutableSetOf<QrCodeBakongTransactionReq>()
+
+            val stopwatch = StopWatch()
+            stopwatch.start()
 
             pendingQrCodes.forEach { qrCode ->
                 val bakongResponse = bakongOpenAPIClientHelper.checkTransactionWithMd5(qrCode.md5)
@@ -45,13 +47,13 @@ class TrackingQrTransaction(
                             )
                         }
                         QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(qrCode.id)
-                        else -> {
-                            retryQrCode.add(qrCode.id)
-                            LOG.info(">>> The QR Code id is in tracking: ${qrCode.id}")
-                        }
+                        else -> retryQrCode.add(qrCode.id)
                     }
                 }
             }
+            stopwatch.stop()
+            LOG.info("### Tracking QR Code time: ${stopwatch.totalTimeMillis} ms") // Timing: 17023 ms with 105 transactions
+
             qrCodeService.saveToSuccessQrCodes(trackingSuccessQrCodes)
             qrCodeService.saveWithIncreaseRetryAttempt(retryQrCode)
             qrCodeService.saveToFailQrCodes(trackingFailQrIds)

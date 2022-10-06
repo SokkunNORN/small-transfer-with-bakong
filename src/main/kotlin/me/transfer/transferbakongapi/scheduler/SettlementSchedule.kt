@@ -9,7 +9,7 @@ class SettlementSchedule(
     private val service: TransactionService
 ) {
 
-    @Scheduled(cron = "10 * * * * *")
+    @Scheduled(cron = "* * 1 * * *")
     fun settleTransaction() {
         service.settleTransaction()
     }
