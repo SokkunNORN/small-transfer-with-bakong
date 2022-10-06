@@ -1,4 +1,4 @@
-package me.transfer.transferbakongapi.model
+package me.transfer.transferbakongapi.demain.model
 
 import org.hibernate.annotations.CreationTimestamp
 import java.math.BigDecimal
@@ -28,9 +28,6 @@ data class QrCode(
     @Column(name = "description")
     val description: String? = null,
 
-    @Column(name = "retry_attempted", nullable = false)
-    var retryAttempted: Long = 0L,
-
     @Column(name = "terminal_label")
     val terminalLabel: String? = null,
 
@@ -39,7 +36,10 @@ data class QrCode(
 
     @CreationTimestamp
     @Column(name = "created_at")
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(name = "timeout_at")
+    val timeoutAt: LocalDateTime = LocalDateTime.now().plusSeconds(65)
 ) {
     @ManyToOne
     @JoinColumn(name = "currency_id")

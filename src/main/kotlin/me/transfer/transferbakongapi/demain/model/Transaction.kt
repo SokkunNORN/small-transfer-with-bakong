@@ -1,4 +1,4 @@
-package me.transfer.transferbakongapi.model
+package me.transfer.transferbakongapi.demain.model
 
 import org.hibernate.FetchMode.LAZY
 import org.hibernate.annotations.CreationTimestamp

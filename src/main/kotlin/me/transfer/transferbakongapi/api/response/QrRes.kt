@@ -1,12 +1,6 @@
 package me.transfer.transferbakongapi.api.response
 
-import me.transfer.transferbakongapi.api.response.helper.err
-import me.transfer.transferbakongapi.command.Constants
-import me.transfer.transferbakongapi.command.enum.CurrencyEnum
-import me.transfer.transferbakongapi.command.getOrElseThrow
-import me.transfer.transferbakongapi.command.isContainDecimal
-import me.transfer.transferbakongapi.model.CurrencyType
-import java.math.BigDecimal
+import me.transfer.transferbakongapi.demain.model.CurrencyType
 
 data class QrRes(
     val amount: Double,

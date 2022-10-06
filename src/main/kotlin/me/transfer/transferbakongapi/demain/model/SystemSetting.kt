@@ -1,4 +1,4 @@
-package me.transfer.transferbakongapi.model
+package me.transfer.transferbakongapi.demain.model
 
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -15,7 +15,7 @@ data class SystemSetting(
     var bakongMobileToken: String? = "",
 
     @Column(name = "bakong_mobile_token_expired_at")
-    var bakongMobileTokenExpiredAt: LocalDateTime,
+    var bakongMobileTokenExpiredAt: LocalDateTime? = null,
 
     @Column(name = "bakong_open_email")
     var bakongOpenEmail: String,
@@ -33,5 +33,4 @@ data class SystemSetting(
     @UpdateTimestamp
     @Column(name = "updated_at")
     var updatedAt: LocalDateTime? = null
-
 )

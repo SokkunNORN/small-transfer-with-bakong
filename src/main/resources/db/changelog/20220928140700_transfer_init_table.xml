@@ -95,16 +95,17 @@
             <column name="bill_number" type="varchar2"/>
             <column name="description" type="text"/>
 
-            <column name="retry_attempted" type="int" defaultValue="0">
-                <constraints nullable="false"/>
-            </column>
-
             <column name="terminal_label" type="varchar2"/>
             <column name="cashier_label" type="varchar2"/>
             <column name="status_id" type="number(19)">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_at" type="timestamp"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeout_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
     </changeSet>

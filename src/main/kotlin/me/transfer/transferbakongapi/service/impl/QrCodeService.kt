@@ -2,25 +2,22 @@ package me.transfer.transferbakongapi.service.impl
 
 import kh.org.nbc.bakong_khqr.model.KHQRCurrency
 import kh.org.nbc.bakong_khqr.model.MerchantInfo
-import me.transfer.transferbakongapi.api.bakong_client.enum.ErrorCode
-import me.transfer.transferbakongapi.api.bakong_client.enum.ResponseCode
-import me.transfer.transferbakongapi.api.bakong_client.open.helper.BakongOpenAPIClientHelper
+import me.transfer.transferbakongapi.api.request.QrCodeBakongTransactionReq
 import me.transfer.transferbakongapi.api.request.QrReq
 import me.transfer.transferbakongapi.command.Constants
 import me.transfer.transferbakongapi.command.enum.CurrencyEnum
 import me.transfer.transferbakongapi.command.enum.QrCodeStatusEnum
 import me.transfer.transferbakongapi.command.getOrElseThrow
-import me.transfer.transferbakongapi.model.CurrencyType
-import me.transfer.transferbakongapi.model.QrCode
+import me.transfer.transferbakongapi.demain.model.CurrencyType
+import me.transfer.transferbakongapi.demain.model.QrCode
 import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.repository.QrCodeStatusRepository
 import me.transfer.transferbakongapi.service.IQrCodeService
 import org.slf4j.LoggerFactory
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Retryable
-import org.springframework.retry.support.RetrySynchronizationManager
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -28,7 +25,6 @@ import java.util.concurrent.CompletableFuture
 class QrCodeService(
     private val qrCodeRepo: QrCodeRepository,
     private val qrCodeStatusRepo: QrCodeStatusRepository,
-    private val bakongOpenAPIClientHelper: BakongOpenAPIClientHelper,
     private val transactionService: TransactionService
 ) : IQrCodeService {
     private val LOG = LoggerFactory.getLogger(javaClass)
@@ -51,7 +47,7 @@ class QrCodeService(
         return merchantInfo
     }
 
-    fun saveQRCode(
+    fun initQrCode(
         qrString: String,
         md5: String,
         currency: CurrencyType,
@@ -69,8 +65,7 @@ class QrCodeService(
             billNumber = billNumber,
             description = description,
             cushierLabel = cushierLabel,
-            terminalLabel = terminalLabel,
-            retryAttempted = 0
+            terminalLabel = terminalLabel
         ).apply {
             this.currency = currency
             this.status = qrCodeStatus
@@ -79,66 +74,79 @@ class QrCodeService(
         return qrCodeRepo.save(qrCode)
     }
 
-    fun updateQrCodeStatus(qrCode: QrCode, qrCodeStatusId: Long, retryAttempted: Int): QrCode {
-        val qrCodeStatus = getOrElseThrow("QrCodeStatus", qrCodeStatusId, qrCodeStatusRepo::findById)
-        return qrCodeRepo.save(
-            qrCode.apply {
-                this.retryAttempted = retryAttempted.toLong()
-                this.status = qrCodeStatus
+    fun saveToSuccessQrCodes(requests: Set<QrCodeBakongTransactionReq>) {
+        if (requests.isNotEmpty()) {
+            LOG.info("Successful transaction QR Code id: ${requests.map { it.qrCode.id }}")
+            val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.SUCCESS.id, qrCodeStatusRepo::findById)
+            val qrCodeIds = requests.map { it.qrCode.id }.toSet()
+            val successQrCodes = this.getAllQrCodeByIds(qrCodeIds).map {
+                it.status = status
+                it
             }
-        )
+
+            this.saveAllQrCode(successQrCodes.toSet())
+            transactionService.saveAllTransactions(requests)
+        }
     }
 
-    @Retryable(
-        value = [RuntimeException::class],
-        maxAttempts = Constants.MAX_RETRY_ATTEMPT_BAKONG_QR_TRANSACTION,
-        backoff = Backoff(delay = Constants.BAKONG_QR_TRANSACTION_RETRY_IN)
-    )
-    fun trackingQrTransactionStatus(qrCode: QrCode) {
-        val retryCount = RetrySynchronizationManager.getContext().retryCount + 1
-        val logDescription = "Tracking Transaction status of QR Code [${qrCode.id}], md5 [${qrCode.md5}]"
-        LOG.info("Retry[$retryCount] - $logDescription")
+    fun saveWhenTimeout(ids: Set<Long>) {
+        if (ids.isNotEmpty()) {
+            val qrCodes = this.getAllQrCodeByIds(ids)
+            val timeoutQrCodes = mutableSetOf<Long>()
+            val pendingQrCodeIds = mutableSetOf<Long>()
 
-        val updateQrCode = getOrElseThrow("QrCode", qrCode.id, qrCodeRepo::findById)
-
-        if (updateQrCode.status.id != QrCodeStatusEnum.PENDING.id) {
-            LOG.info("Stop retry for QR Code [${qrCode.id}], md5 [${qrCode.md5}]")
-            return
-        }
-
-        val res = bakongOpenAPIClientHelper.checkTransactionWithMd5(updateQrCode.md5)
-        val data = res.data
-
-        when (res.responseCode) {
-            ResponseCode.SUCCESS.code -> {
-                if (data != null) {
-                    LOG.info("Transaction Success hash: ${data.hash}")
-                    updateQrCodeStatus(updateQrCode, QrCodeStatusEnum.SUCCESS.id, retryCount)
-                    CompletableFuture.supplyAsync {
-                        transactionService.createTransaction(updateQrCode, data)
-                    }
+            qrCodes.map {
+                if (it.timeoutAt.isBefore(LocalDateTime.now())) {
+                    timeoutQrCodes.add(it.id)
                 } else {
-                    LOG.info("Success but no data")
-                    throw java.lang.RuntimeException("try_check_again")
+                    pendingQrCodeIds.add(it.id)
                 }
             }
-            ResponseCode.FAIL.code -> {
-                when (res.errorCode) {
-                    ErrorCode.TRANSACTION_NOT_FOUND.code -> {
-                        LOG.info("Not found transaction -> Try again")
-                        throw java.lang.RuntimeException("try_check_again")
-                    }
-                    ErrorCode.TRANSACTION_FAILED.code -> {
-                        LOG.info("Transaction Failed")
-                        updateQrCodeStatus(updateQrCode, QrCodeStatusEnum.FAILED.id, retryCount)
-                    }
-                    else -> {
-                        LOG.info("Unknown error code")
-                        throw java.lang.RuntimeException("try_check_again")
-                    }
-                }
-            }
+
+            if (pendingQrCodeIds.isNotEmpty()) LOG.info(">>> The QR Code id is in tracking: $pendingQrCodeIds")
+
+            if (timeoutQrCodes.isNotEmpty()) this.saveToTimeoutQrCodes(timeoutQrCodes)
         }
+    }
+
+    fun saveToTimeoutQrCodes(ids: Set<Long>) {
+        if (ids.isNotEmpty()) {
+            LOG.info(">>> Time out QR Code id: $ids")
+            val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.TIME_OUT.id, qrCodeStatusRepo::findById)
+            val timeoutQrCode = this.getAllQrCodeByIds(ids).map {
+                it.status = status
+                it
+            }
+
+            this.saveAllQrCode(timeoutQrCode.toSet())
+        }
+    }
+
+    fun saveToFailQrCodes(ids: Set<Long>) {
+        if (ids.isNotEmpty()) {
+            LOG.info(">>> Failed tracking QR Code id: $ids")
+            val status = getOrElseThrow("QR Code Status", QrCodeStatusEnum.FAILED.id, qrCodeStatusRepo::findById)
+            val successQrCodes = this.getAllQrCodeByIds(ids).map {
+                it.status = status
+                it
+            }
+
+            this.saveAllQrCode(successQrCodes.toSet())
+        }
+    }
+
+    fun getAllPendingQrCode() : List<QrCode> {
+        return qrCodeRepo.findAllByStatusId(QrCodeStatusEnum.PENDING.id)
+    }
+
+    @Transactional
+    private fun saveAllQrCode(qrCodes: Set<QrCode>) {
+        qrCodeRepo.saveAll(qrCodes)
+        LOG.info(">>> Saved All QR code: ${qrCodes.size} qrCode(s)")
+    }
+
+    private fun getAllQrCodeByIds(ids: Set<Long>): List<QrCode> {
+        return qrCodeRepo.findAllByIdIn(ids)
     }
 
     private fun getKhQrCurrency(currencyId: Long): KHQRCurrency {

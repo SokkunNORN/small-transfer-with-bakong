@@ -5,13 +5,10 @@ import me.transfer.transferbakongapi.api.request.QrReq
 import me.transfer.transferbakongapi.api.response.QrRes
 import me.transfer.transferbakongapi.api.response.helper.err
 import me.transfer.transferbakongapi.command.getOrElseThrow
-import me.transfer.transferbakongapi.model.QrCode
 import me.transfer.transferbakongapi.repository.CurrencyTypeRepository
-import me.transfer.transferbakongapi.repository.QrCodeRepository
 import me.transfer.transferbakongapi.service.IKHQRTransactionService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.CompletableFuture
 
 @Service
 class KHQRTransactionService(
@@ -28,7 +25,7 @@ class KHQRTransactionService(
         val md5 = khQrRes.data.md5
         val qrString = khQrRes.data.qr
 
-        val qrCode = qrCodeService.saveQRCode(
+        val qrCode = qrCodeService.initQrCode(
             qrString,
             md5,
             currency,
@@ -40,10 +37,13 @@ class KHQRTransactionService(
         )
         LOG.info(">>> Created QR ${qrCode.billNumber}")
 
-        CompletableFuture.supplyAsync {
-            Thread.sleep(10_000)
-            qrCodeService.trackingQrTransactionStatus(qrCode)
-        }
+//        CompletableFuture.supplyAsync{
+//            val stopwatch = StopWatch()
+//            stopwatch.start()
+//            qrCodeService.trackingQrTransactionStatus(qrCode)
+//            stopwatch.stop()
+//            LOG.info("### Stop watch from retry: ${stopwatch.totalTimeMillis} ms")
+//        }
 
         return QrRes(
             request.amount!!,

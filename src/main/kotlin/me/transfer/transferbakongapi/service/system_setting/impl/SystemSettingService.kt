@@ -2,7 +2,7 @@ package me.transfer.transferbakongapi.service.system_setting.impl
 
 import me.transfer.transferbakongapi.command.Constants
 import me.transfer.transferbakongapi.command.getOrElseThrow
-import me.transfer.transferbakongapi.model.SystemSetting
+import me.transfer.transferbakongapi.demain.model.SystemSetting
 import me.transfer.transferbakongapi.repository.SystemSettingRepository
 import me.transfer.transferbakongapi.service.system_setting.ISystemSettingService
 import org.springframework.stereotype.Service
