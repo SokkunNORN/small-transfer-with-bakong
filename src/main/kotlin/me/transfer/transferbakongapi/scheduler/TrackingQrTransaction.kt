@@ -15,6 +15,7 @@ import me.transfer.transferbakongapi.api.request.QrCodeBakongTransactionReq
 import org.springframework.scheduling.annotation.Async
 import org.springframework.util.StopWatch
 import java.util.concurrent.CompletableFuture
+import javax.transaction.Transactional
 
 @Service
 class TrackingQrTransaction(
@@ -31,8 +32,8 @@ class TrackingQrTransaction(
      * [@cron]: recommend on execute fun start from hour, date, month, year
      * Reference: https://www.baeldung.com/spring-scheduled-tasks
      * **/
-    @Scheduled(initialDelay = 2000, fixedRate = 2000)
-    @Async
+    @Scheduled(initialDelay = 2000, fixedDelay = 1000)
+    @Transactional
     fun trackingQrTransactionStatus() {
         val pendingQrCodes = qrCodeService.getAllPendingQrCode()
 
@@ -41,35 +42,28 @@ class TrackingQrTransaction(
             val retryQrCode = mutableSetOf<Long>()
             val trackingSuccessQrCodes = mutableSetOf<QrCodeBakongTransactionReq>()
 
-            CompletableFuture.supplyAsync {
-                val stopwatch = StopWatch()
-                stopwatch.start()
+            pendingQrCodes.forEach { qrCode ->
+                val bakongResponse = bakongOpenAPIClientHelper.checkTransactionWithMd5(qrCode.md5)
 
-                pendingQrCodes.forEach { qrCode ->
-                    val bakongResponse = bakongOpenAPIClientHelper.checkTransactionWithMd5(qrCode.md5)
-
-                    this.trackingBakongTransactionByMD5(bakongResponse).let {
-                        when (it) {
-                            QrCodeStatusEnum.SUCCESS.id -> {
-                                trackingSuccessQrCodes.add(
-                                    QrCodeBakongTransactionReq(
-                                        qrCode = qrCode,
-                                        bakongTrx = bakongResponse.data!!
-                                    )
+                this.trackingBakongTransactionByMD5(bakongResponse).let {
+                    when (it) {
+                        QrCodeStatusEnum.SUCCESS.id -> {
+                            trackingSuccessQrCodes.add(
+                                QrCodeBakongTransactionReq(
+                                    qrCode = qrCode,
+                                    bakongTrx = bakongResponse.data!!
                                 )
-                            }
-                            QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(qrCode.id)
-                            else -> retryQrCode.add(qrCode.id)
+                            )
                         }
+                        QrCodeStatusEnum.FAILED.id -> trackingFailQrIds.add(qrCode.id)
+                        else -> retryQrCode.add(qrCode.id)
                     }
                 }
-                stopwatch.stop()
-                LOG.info("### Tracking QR Code time: ${stopwatch.totalTimeMillis} ms") // Timing: 17023 ms with 105 transactions
+            } // Timing: 17023 ms with 105 transactions
 
-                qrCodeService.saveToSuccessQrCodes(trackingSuccessQrCodes)
-                qrCodeService.saveToFailQrCodes(trackingFailQrIds)
-                qrCodeService.saveWhenTimeout(retryQrCode)
-            }
+            qrCodeService.saveToSuccessQrCodes(trackingSuccessQrCodes)
+            qrCodeService.saveToFailQrCodes(trackingFailQrIds)
+            qrCodeService.saveWhenTimeout(retryQrCode)
         }
     }
 

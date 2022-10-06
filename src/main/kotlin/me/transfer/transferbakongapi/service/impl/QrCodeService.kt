@@ -84,9 +84,7 @@ class QrCodeService(
                 it
             }
 
-            CompletableFuture.supplyAsync {
-                this.saveAllQrCode(successQrCodes.toSet())
-            }
+            this.saveAllQrCode(successQrCodes.toSet())
             transactionService.saveAllTransactions(requests)
         }
     }
