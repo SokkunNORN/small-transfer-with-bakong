@@ -4,12 +4,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.retry.annotation.EnableRetry
+import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableFeignClients
 @EnableScheduling
-@EnableRetry
+@EnableAsync
 class TransferBakongApiApplication
 
 fun main(args: Array<String>) {
