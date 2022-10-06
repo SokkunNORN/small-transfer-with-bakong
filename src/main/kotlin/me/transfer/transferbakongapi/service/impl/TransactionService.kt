@@ -17,7 +17,6 @@ import javax.transaction.Transactional
 @Service
 class TransactionService(
   private val transactionRepo: TransactionRepository,
-  private val currencyTypeRepo: CurrencyTypeRepository,
   private val transactionStatusRepo: TransactionStatusRepository
 ) : ITransactionService {
   private val LOG = LoggerFactory.getLogger(javaClass)
