@@ -28,6 +28,7 @@ class TrackingQrTransaction(
      * [fixedRate]: No delay and start from one executed to start new execute in fixedRate value ms.
      * [fixedDelay]: Delay from end executed to start new execute in fixedDelay value ms.
      * [initialDelay]: Initial delay when start to executing in initialDelay value ms
+     * [@cron]: recommend on execute fun start from hour, date, month, year
      * **/
     @Scheduled(initialDelay = 2000, fixedRate = 2000)
     @Async
