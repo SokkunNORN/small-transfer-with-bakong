@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -64,8 +65,7 @@ class QrCodeService(
             billNumber = billNumber,
             description = description,
             cushierLabel = cushierLabel,
-            terminalLabel = terminalLabel,
-            retryAttempted = 0
+            terminalLabel = terminalLabel
         ).apply {
             this.currency = currency
             this.status = qrCodeStatus
@@ -91,29 +91,21 @@ class QrCodeService(
         }
     }
 
-    fun saveWithIncreaseRetryAttempt(ids: Set<Long>) {
+    fun saveWhenTimeout(ids: Set<Long>) {
         if (ids.isNotEmpty()) {
             val qrCodes = this.getAllQrCodeByIds(ids)
             val timeoutQrCodes = mutableSetOf<Long>()
             val pendingQrCodeIds = mutableSetOf<Long>()
 
             qrCodes.map {
-                if (it.retryAttempted > 60 / 2) {
+                if (it.timeoutAt.isBefore(LocalDateTime.now())) {
                     timeoutQrCodes.add(it.id)
                 } else {
                     pendingQrCodeIds.add(it.id)
                 }
             }
 
-            if (pendingQrCodeIds.isNotEmpty()) {
-                LOG.info(">>> The QR Code id is in tracking: $pendingQrCodeIds")
-                val pendingQrCodes = this.getAllQrCodeByIds(pendingQrCodeIds).map {
-                    it.retryAttempted = it.retryAttempted.plus(1)
-                    it
-                }
-
-                this.saveAllQrCode(pendingQrCodes.toSet())
-            }
+            if (pendingQrCodeIds.isNotEmpty()) LOG.info(">>> The QR Code id is in tracking: $pendingQrCodeIds")
 
             if (timeoutQrCodes.isNotEmpty()) this.saveToTimeoutQrCodes(timeoutQrCodes)
         }

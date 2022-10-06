@@ -29,6 +29,7 @@ class TrackingQrTransaction(
      * [fixedDelay]: Delay from end executed to start new execute in fixedDelay value ms.
      * [initialDelay]: Initial delay when start to executing in initialDelay value ms
      * [@cron]: recommend on execute fun start from hour, date, month, year
+     * Reference: https://www.baeldung.com/spring-scheduled-tasks
      * **/
     @Scheduled(initialDelay = 2000, fixedRate = 2000)
     @Async
@@ -66,8 +67,8 @@ class TrackingQrTransaction(
                 LOG.info("### Tracking QR Code time: ${stopwatch.totalTimeMillis} ms") // Timing: 17023 ms with 105 transactions
 
                 qrCodeService.saveToSuccessQrCodes(trackingSuccessQrCodes)
-                qrCodeService.saveWithIncreaseRetryAttempt(retryQrCode)
                 qrCodeService.saveToFailQrCodes(trackingFailQrIds)
+                qrCodeService.saveWhenTimeout(retryQrCode)
             }
         }
     }
