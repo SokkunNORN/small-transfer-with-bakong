@@ -39,7 +39,7 @@ data class QrCode(
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "timeout_at")
-    val timeoutAt: LocalDateTime = LocalDateTime.now().plusSeconds(65)
+    val timeoutAt: LocalDateTime = LocalDateTime.now().plusSeconds(20)
 ) {
     @ManyToOne
     @JoinColumn(name = "currency_id")
